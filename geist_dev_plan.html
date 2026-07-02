@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geist — Plan de desarrollo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f7f6f3;--bg3:#f0efe9;
+  --text:#1a1a18;--text2:#5a5a56;--text3:#8a8a84;
+  --border:#e0dfd8;--border2:#c8c7be;
+  --green-bg:#eaf3de;--green:#3b6d11;
+  --blue-bg:#e6f1fb;--blue:#185fa5;
+  --amber-bg:#faeeda;--amber:#854f0b;
+  --purple-bg:#eeedfe;--purple:#534ab7;
+  --red-bg:#fcebeb;--red:#a32d2d;
+  --teal-bg:#e1f5ee;--teal:#0f6e56;
+  --pink-bg:#fbeaf0;--pink:#993556;
+  --gray-bg:#f1efe8;--gray:#5f5e5a;
+  --rad:8px;--rad-lg:12px;
+  --font:'system-ui',-apple-system,sans-serif;
+  --mono:'ui-monospace','SF Mono','Fira Code',monospace;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1a;--bg2:#252522;--bg3:#2e2e2a;
+    --text:#e8e6de;--text2:#a8a69e;--text3:#6a6a62;
+    --border:#3a3a34;--border2:#4a4a42;
+    --green-bg:#1a3406;--green:#a0d070;
+    --blue-bg:#0a2e50;--blue:#7ab8f0;
+    --amber-bg:#3a2004;--amber:#f0b060;
+    --purple-bg:#22184a;--purple:#b0a8f0;
+    --red-bg:#3a1010;--red:#f08080;
+    --teal-bg:#042820;--teal:#60c8a0;
+    --pink-bg:#3a1020;--pink:#f090b8;
+    --gray-bg:#222220;--gray:#a0a098;
+  }
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+
+.app{max-width:820px;margin:0 auto;padding:0 0 3rem}
+
+/* Header */
+.header{padding:2rem 2rem 1.5rem;border-bottom:0.5px solid var(--border)}
+.project-name{font-size:24px;font-weight:600;letter-spacing:-.02em;color:var(--text)}
+.project-sub{font-size:13px;color:var(--text2);margin-top:4px}
+.badges{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.badge{font-size:11px;padding:3px 8px;border-radius:20px;border:0.5px solid var(--border2);color:var(--text2)}
+
+/* Controls */
+.controls{padding:.875rem 2rem;border-bottom:0.5px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.filter-btn{font-size:12px;padding:4px 10px;border-radius:20px;border:0.5px solid var(--border2);cursor:pointer;background:transparent;color:var(--text2);transition:all .15s;font-family:var(--font)}
+.filter-btn:hover{border-color:var(--blue);color:var(--blue)}
+.filter-btn.active{background:var(--blue-bg);color:var(--blue);border-color:transparent}
+.controls-right{margin-left:auto;display:flex;gap:12px;align-items:center}
+.legend{display:flex;gap:10px;font-size:11px;color:var(--text3)}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:3px;vertical-align:middle}
+
+/* Summary bar */
+.summary{background:var(--bg2);border-bottom:0.5px solid var(--border);padding:.6rem 2rem;display:flex;gap:1.5rem;font-size:12px;color:var(--text2)}
+.summary b{color:var(--text);font-weight:500}
+
+/* Phases */
+.phases{padding:1.5rem 2rem;display:flex;flex-direction:column;gap:1.25rem}
+
+.phase-block{}
+.phase-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;user-select:none}
+.phase-header:hover .phase-name{color:var(--blue)}
+.phase-pill{font-size:10px;font-weight:600;padding:2px 7px;border-radius:12px;letter-spacing:.05em;text-transform:uppercase}
+.phase-name{font-size:14px;font-weight:500;color:var(--text)}
+.phase-meta{font-size:12px;color:var(--text3);margin-left:auto}
+.chevron{font-size:13px;color:var(--text3);transition:transform .2s;display:inline-block}
+.collapsed .tasks{display:none}
+.collapsed .chevron{transform:rotate(-90deg)}
+
+/* Tasks */
+.tasks{display:flex;flex-direction:column;gap:5px}
+.task{border:0.5px solid var(--border);border-radius:var(--rad);overflow:hidden;transition:border-color .15s}
+.task:hover{border-color:var(--border2)}
+.task.open{border-color:var(--border2)}
+.task-header{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;user-select:none}
+.task-id{font-size:11px;font-family:var(--mono);color:var(--text3);min-width:64px}
+.task-title{font-size:13px;color:var(--text);flex:1}
+.task-est{font-size:11px;color:var(--text3);text-align:right;min-width:50px}
+.task-chev{font-size:12px;color:var(--text3);transition:transform .2s}
+.task.open .task-chev{transform:rotate(180deg)}
+
+/* Task detail */
+.task-detail{display:none;padding:0 12px 12px}
+.task.open .task-detail{display:block}
+.detail-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.detail-box{background:var(--bg2);border-radius:var(--rad);padding:8px 10px}
+.detail-label{font-size:11px;color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em}
+.detail-val{font-size:12px;color:var(--text)}
+.deps{margin-bottom:8px;font-size:12px;color:var(--text2)}
+.dep-tag{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 6px;background:var(--bg3);border:0.5px solid var(--border);border-radius:4px;margin:2px 2px 2px 0;color:var(--text2)}
+
+/* Atoms */
+.atoms-section{margin-top:4px}
+.atoms-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.atom{display:flex;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:12px;color:var(--text)}
+.atom:last-child{border-bottom:none}
+.atom-n{font-family:var(--mono);font-size:11px;color:var(--text3);min-width:18px;padding-top:1px}
+
+.ask-btn{margin-top:10px;font-size:12px;padding:5px 10px;border:0.5px solid var(--border2);border-radius:var(--rad);background:transparent;color:var(--text2);cursor:pointer;font-family:var(--font);transition:all .15s}
+.ask-btn:hover{background:var(--blue-bg);color:var(--blue);border-color:transparent}
+
+/* Phase color pills */
+.f0 .phase-pill{background:var(--green-bg);color:var(--green)}
+.f1 .phase-pill{background:var(--blue-bg);color:var(--blue)}
+.f2 .phase-pill{background:var(--amber-bg);color:var(--amber)}
+.f3 .phase-pill{background:var(--purple-bg);color:var(--purple)}
+.f5 .phase-pill{background:var(--red-bg);color:var(--red)}
+.f6 .phase-pill{background:var(--teal-bg);color:var(--teal)}
+.f7 .phase-pill{background:var(--pink-bg);color:var(--pink)}
+.f8 .phase-pill{background:var(--gray-bg);color:var(--gray)}
+
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="header">
+  <div class="project-name">Geist — Plan de desarrollo</div>
+  <div class="project-sub">RAG de reglas Infinity N5 · API-first · Bot @geistBot · Bilingüe ES/EN</div>
+  <div class="badges">
+    <span class="badge">MVP: 95–135 h</span>
+    <span class="badge">8–12 semanas calendario</span>
+    <span class="badge">Proyecto unipersonal ~2–3 h/día</span>
+    <span class="badge">FastAPI + ChromaDB + Telegram</span>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="filter-btn active" onclick="filter('all',this)">Todas</button>
+  <button class="filter-btn" onclick="filter('mvp',this)">Solo MVP</button>
+  <button class="filter-btn" onclick="filter('f0',this)">F0 Bootstrap</button>
+  <button class="filter-btn" onclick="filter('f1',this)">F1 Ingesta</button>
+  <button class="filter-btn" onclick="filter('f2',this)">F2 Núcleo RAG</button>
+  <button class="filter-btn" onclick="filter('f3',this)">F3 Bot</button>
+  <button class="filter-btn" onclick="filter('f5',this)">F5 Deploy</button>
+  <button class="filter-btn" onclick="filter('f6',this)">F6 Docs</button>
+  <button class="filter-btn" onclick="filter('f7',this)">F7 Webapp</button>
+  <button class="filter-btn" onclick="filter('f8',this)">F8 Army</button>
+  <div class="controls-right">
+    <div class="legend">
+      <span><span class="dot" style="background:#639922"></span>crítica</span>
+      <span><span class="dot" style="background:#185fa5"></span>alta</span>
+      <span><span class="dot" style="background:#888780"></span>media</span>
+    </div>
+  </div>
+</div>
+
+<div class="summary">
+  <span>Tareas visibles: <b id="vis-count">21</b></span>
+  <span>Estimación: <b id="vis-h">146–201 h</b></span>
+  <span>Total completo: <b>14–22 semanas</b></span>
+</div>
+
+<div class="phases" id="phases-root"></div>
+
+</div>
+
+<script>
+const PHASES=[
+{id:'f0',label:'F0',name:'Bootstrap',est:'3–5 h',mvp:true,tasks:[
+  {id:'TAR-00',title:'Bootstrap del proyecto',prio:5,est:'3–5 h',deps:[],
+   goal:'Estructura monorepo, toolchain y config base. Prerequisito de todo lo demás.',
+   risk:'Sin esto nada arranca. No saltárselo bajo ningún concepto.',
+   atoms:[
+     'Inicializar monorepo con uv: services/api, services/bot, shared, ingestion, eval, tests',
+     'Crear pyproject.toml por servicio (api, bot) + shared. Python 3.11+',
+     'Configurar pydantic-settings con namespaces GEIST_API_* y GEIST_BOT_*',
+     'Pre-commit: ruff (lint+format) + mypy --strict en src/',
+     'Justfile: install, lint, test, api-run, bot-run, index, eval',
+     'Docker-compose dev: servicios api + bot con env vars de prueba',
+     'Verificar: uv sync + docker-compose up + mypy --strict pasan sin errores',
+     'Crear shared/geist_shared/models.py con placeholders de Request/Response'
+   ]}
+]},
+{id:'f1',label:'F1',name:'Ingesta de datos',est:'14–20 h',mvp:true,tasks:[
+  {id:'TAR-01',title:'Extractor PDF → Markdown (ES + EN)',prio:5,est:'8–12 h',deps:['TAR-00'],
+   goal:'Convertir los 6 PDFs (3 manuales × 2 idiomas) a Markdown con frontmatter YAML.',
+   risk:'pymupdf4llm es AGPL — hacer spike de licencia ANTES de escribir código. Desalineación ES↔EN si Corvus Belli rompe paridad de secciones.',
+   atoms:[
+     'Spike de licencia: evaluar si pymupdf4llm es viable (15 min, documentar decisión en ADR)',
+     'Script ingestion/extract.py: recibe path PDF, escribe data/processed/{lang}/{manual}/content.md',
+     'Frontmatter YAML obligatorio: manual_id, lang, source_pdf_hash (sha256), version, extracted_at',
+     'Procesar los 6 PDFs sin excepción. Log explícito de tablas que el parser no maneja bien',
+     'Script de validación: comparar orden de secciones ES↔EN, reportar desalineaciones',
+     'Sampling manual del 5%: verificar >95% de cobertura de contenido'
+   ]},
+  {id:'TAR-01b',title:'Chunking + canonical_rule_id',prio:5,est:'6–8 h',deps:['TAR-01'],
+   goal:'Chunks semánticos por sección/subsección con ID que vincula el chunk ES↔EN de la misma regla.',
+   risk:'Chunks huérfanos (sin par en el otro idioma) requieren revisión manual. La calidad del chunking define el techo del sistema entero.',
+   atoms:[
+     'Definir modelo Pydantic Chunk en shared/ (chunk_id, canonical_rule_id, lang, manual, section_path, page_start, page_end, content, content_hash)',
+     'Algoritmo de chunking: split por heading Markdown, target 200–400 tokens, overlap 15–20%',
+     'Generación de canonical_rule_id: derivado determinista de manual + section_path normalizado',
+     'Normalización: preservar siglas técnicas (CAP, AVA, SWC, BS, PH, WIP, ARM, BTS, CC)',
+     'Script que genera reporte de chunks huérfanos (sin par ES↔EN) para revisión manual',
+     'Test: sampling 20 chunks aleatorios, ≥18 deben ser comprensibles aislados (revisión manual)'
+   ]}
+]},
+{id:'f2',label:'F2',name:'Núcleo RAG',est:'50–66 h',mvp:true,tasks:[
+  {id:'TAR-02',title:'Indexación embeddings multilingüe',prio:5,est:'6–8 h',deps:['TAR-01b'],
+   goal:'ChromaDB persistente con intfloat/multilingual-e5-small. Índice único filtrado por lang en query-time.',
+   risk:'Sin prefijos E5 obligatorios ("passage:" al indexar, "query:" al consultar), la calidad cae 20–30%. No olvidarlo.',
+   atoms:[
+     'Instalar chromadb + sentence-transformers en api/pyproject.toml',
+     'Cargar modelo intfloat/multilingual-e5-small (118M params)',
+     'Script geist-index: lee chunks JSON, añade prefijo "passage: ", indexa en ChromaDB PersistentClient con metadata lang',
+     'Indexación incremental: skip chunks con content_hash ya presente en el índice',
+     'Smoke test bilingüe: "camuflaje" → top-3 lang=es; "camouflage" → top-3 lang=en, sin contaminación cross-lang',
+     'Verificar: indexación completa <10 min en CPU moderna, tamaño on-disk <400 MB'
+   ]},
+  {id:'TAR-02b',title:'Language detection (lingua-py)',prio:5,est:'2–3 h',deps:['TAR-00'],
+   goal:'Función pura detect_language(text) → (Lang, float). Sin red, testeable en aislamiento.',
+   risk:'lingua-py añade ~30 MB al deploy. Precisión baja en queries <3 palabras — mitigar con override explícito.',
+   atoms:[
+     'Instalar lingua-language-detector. Cargar solo detectores ES + EN (no los 75 disponibles)',
+     'Implementar detect_language(text: str) -> tuple[Lang, float] en api/src/geist_api/core/language.py',
+     'Política: confianza ≥0.7 → idioma detectado; <0.7 → fallback ES',
+     'Override explícito: parámetro ?lang=en en API, comandos /en /es en bot',
+     'Tests: 100 ejemplos balanceados ES/EN, >95% en queries >3 palabras, >70% en 1–3 palabras, latencia <5 ms'
+   ]},
+  {id:'TAR-03',title:'Retrieval híbrido con filtro por idioma',prio:5,est:'8–10 h',deps:['TAR-02','TAR-02b'],
+   goal:'POST /v1/retrieve interno. Vector + BM25 fusionados por RRF con filtro lang. Doble threshold.',
+   risk:'Thresholds HIGH/LOW son PROVISIONALES hasta calibración con TAR-03d. Documentarlo, no tratarlos como valores reales.',
+   atoms:[
+     'BM25: indexar chunks por idioma en memoria con rank-bm25 o bm25s',
+     'Implementar hybrid_retrieve(query, lang, top_k): vector search Chroma (where={lang}) + BM25 paralelo',
+     'Fusión por Reciprocal Rank Fusion (RRF, k=60)',
+     'Score gating: mapear score fusionado a "high"/"low"/"none" (thresholds provisionales: 0.80/0.65)',
+     'Fallback cross-lang: si lang-query no da hit ≥LOW pero el otro idioma da ≥HIGH → retornar con disclaimer',
+     'Definir y retornar RetrievalResult: hits, lang_detected, lang_searched, confidence_level, cross_lang_fallback, elapsed_ms',
+     'Test: p95 latencia <300 ms local, recall@5 >85% con primeras 10 queries del golden set'
+   ]},
+  {id:'TAR-03d',title:'Golden dataset + métricas eval',prio:5,est:'8–10 h',deps:['TAR-03'],
+   goal:'60+ queries reales (30 ES + 30 EN). Calibra los thresholds de TAR-03. Sin esto los valores son ficticios.',
+   risk:'Sin golden set real los thresholds son números al azar. Este task valida todo el sistema. Hacerlo ANTES de TAR-03b en la práctica.',
+   atoms:[
+     'Recopilar 30 queries ES + 30 EN de reglas reales de Infinity N5 (comunidad o manuales)',
+     'Añadir ≥10 queries negativas (temas NO en manuales) — 100% deben devolver "no tengo respuesta"',
+     'Formato eval/golden_set.jsonl: id, query, lang, expected_canonical_rules, expected_pages, must_mention, must_not_mention, expected_behavior',
+     'Implementar script geist-eval: calcula Recall@5, MRR, faithfulness rate, citation accuracy, % negative set correcto',
+     'Output: reporte Markdown + JSON con baseline documentado',
+     'Calibrar HIGH_CONFIDENCE y LOW_CONFIDENCE basado en distribución de scores reales',
+     'Configurar CI: geist-eval con LLM mockeado en cada PR, degradación >5% bloquea merge'
+   ]},
+  {id:'TAR-03b',title:'Capa LLM condicional + prompt restrictivo',prio:5,est:'6–8 h',deps:['TAR-03'],
+   goal:'POST /v1/ask público. LLM solo con high confidence. Degradación a fragmento crudo. Cache integrado.',
+   risk:'temperature=0 NO garantiza determinismo — por eso TAR-03c es obligatorio. El prompt en fichero versionado, no inline.',
+   atoms:[
+     'Definir interfaz LLMProvider (Strategy pattern): método ask(query, chunks) → str',
+     'Implementar MistralProvider y GeminiProvider (uno real, uno stub para tests)',
+     'Crear prompts/answer_v1.txt con el prompt restrictivo versionado (NO hardcodeado en código)',
+     'Flujo condicional: high→LLM+validator; low→fragmento crudo; none→mensaje estándar exacto',
+     'Retry exponencial: 3 intentos en errores LLM, degradación a fragmento crudo si todos fallan',
+     'Test: query sin info en manuales → respuesta exacta "No tengo una respuesta para esa pregunta en los manuales."',
+     'Test: LLM provider caído → fragmento crudo sin HTTP 500'
+   ]},
+  {id:'TAR-03c',title:'Faithfulness validator (anti-alucinación)',prio:5,est:'4–6 h',deps:['TAR-03b'],
+   goal:'5 validaciones post-LLM antes de devolver al usuario. Si cualquiera falla → fragmento crudo con disclaimer.',
+   risk:'Falsos positivos posibles (rechazar respuestas buenas). Calibrar con métricas de TAR-03d. Añade ~50–100 ms aceptables.',
+   atoms:[
+     'Validación 1: citas verificables — [Manual X, p.NN] deben existir en páginas de chunks recuperados',
+     'Validación 2: términos técnicos — siglas y nombres propios presentes en el contexto recuperado',
+     'Validación 3: longitud razonable — respuesta >3× longitud del contexto → sospechosa, fail',
+     'Validación 4: no expansión semántica — tokens informativos fuera de contexto <30% (heurística v1)',
+     'Validación 5: idioma correcto — respuesta en mismo idioma que la query (reusar TAR-02b)',
+     'Si falla: log WARNING con payload completo + devolver fragmento crudo con disclaimer',
+     'Exponer tasa de fallo del validator en /v1/metrics (objetivo <5% en queries bien formuladas)'
+   ]},
+  {id:'TAR-05',title:'Seguridad: rate limit + validación input',prio:4,est:'5–7 h',deps:['TAR-03'],
+   goal:'Autenticación bot↔API, rate limiting por chat_id/IP, validación input, anti prompt-injection.',
+   risk:'NO filtrar <>{} — son válidos en queries legítimas de wargaming. Solo rechazar no-imprimibles.',
+   atoms:[
+     'Shared secret X-Internal-Auth en header: bot envía, API valida. Bot sin secret → 401',
+     'API key X-API-Key para webapp (allowlist en config). Sin API key → rate limit por IP más restrictivo',
+     'slowapi: bot 10 req/min, 100 req/h por chat_id; anónimo 5/30 por IP; con API key 30/500',
+     'Validación input: max 500 chars, rechazo de caracteres de control no-imprimibles (excepto \\n \\t)',
+     'Denylist de patrones jailbreak en config (no hardcodeada en código)',
+     'Test: bot sin secret → 401; input >500 chars → 422 con mensaje claro; rate limit verificado por chat_id'
+   ]},
+  {id:'TAR-05b',title:'Cache de respuestas',prio:3,est:'3–4 h',deps:['TAR-03b'],
+   goal:'Cache persistente con diskcache. Solo cachear respuestas que pasan faithfulness validator.',
+   risk:'Cache key debe incluir prompt_version e index_version. Sin esto, respuestas antiguas sobreviven a cambios de prompt.',
+   atoms:[
+     'Cache key: sha256(normalize(query) + lang + prompt_version + index_version)',
+     'Storage con diskcache persistente, TTL 30 días',
+     'Invalidación implícita: bump manual de prompt_version o index_version al reindexar',
+     'Cachear SOLO respuestas que pasan faithfulness validator (no fragmentos crudos, no errores)',
+     'Exponer hit rate en /v1/metrics (objetivo >40% tras 1 semana en producción)'
+   ]},
+  {id:'TAR-09',title:'Tests + CI pipeline',prio:4,est:'8–10 h',deps:['TAR-03b'],
+   goal:'Pirámide de tests completa. Suite sin LLM real en <60 s. CI bloquea merge si falla.',
+   risk:'E2E con LLM real = job manual. No en cada push. LLM mock con respuestas determinísticas según query.',
+   atoms:[
+     'Unit tests: chunking, normalización, language detection, faithfulness validator (rápidos, sin red)',
+     'Integration tests: pipeline ingesta E2E con manual reducido versionado en tests/fixtures/',
+     'API tests: httpx.AsyncClient contra FastAPI in-process, LLM mockeado con respuestas determinísticas',
+     'LLM mock: respuestas hardcodeadas por query — simula high/low/none confidence y alucinaciones conocidas',
+     'GitHub Actions: matrix Python 3.11/3.12, lint + mypy + suite completa en cada PR',
+     'Coverage: >85% en validation/ y retrieval/, >70% global — CI falla si baja del umbral',
+     'Job manual separado: E2E con LLM real (no en cada push automático)'
+   ]}
+]},
+{id:'f3',label:'F3',name:'Bot @geistBot',est:'8–12 h',mvp:true,tasks:[
+  {id:'TAR-04',title:'Bot Telegram @geistBot (proceso separado)',prio:5,est:'8–12 h',deps:['TAR-03b','TAR-05'],
+   goal:'python-telegram-bot v21+ async. Proceso independiente de la API. Comunica vía HTTP.',
+   risk:'Bot separado = dos contenedores en Railway/Fly. Overhead mínimo, compensa en deploys independientes y debugging aislado.',
+   atoms:[
+     'Crear ApiClient en bot/src/geist_bot/api_client.py: httpx.AsyncClient, retry exp. 3 intentos, timeout 10s, headers X-Internal-Auth + chat_id',
+     'Webhook en producción, polling en dev (toggle por env var GEIST_BOT_WEBHOOK)',
+     'Handler texto libre y /ask <pregunta>: POST /v1/ask → formatea respuesta con citas',
+     'Handler /rule <término>: POST /v1/retrieve sin LLM — devuelve fragmentos raw',
+     'Handlers /en y /es: fuerzan lang en el request a la API',
+     'Handler /feedback <texto>: POST /v1/feedback',
+     'Handler /forget: POST /v1/users/forget (GDPR)',
+     'Handlers /start y /help: onboarding bilingüe con disclaimer y enlace a PRIVACY.md',
+     'Inline keyboard 👍/👎 tras cada respuesta: POST /v1/feedback con rating',
+     'Splitting de mensajes >4096 chars por párrafos sin romper palabras',
+     'Errores: nunca exponer stacktrace al usuario, mensaje genérico + log con request_id'
+   ]}
+]},
+{id:'f5',label:'F5',name:'Deploy + Operación',est:'15–22 h',mvp:true,tasks:[
+  {id:'TAR-08',title:'Despliegue API + Bot independientes',prio:4,est:'8–12 h',deps:['TAR-04'],
+   goal:'Railway o Fly.io. Dos servicios independientes. ChromaDB con volumen persistente obligatorio.',
+   risk:'Sin volumen montado para ChromaDB, el índice se pierde en cada deploy. Error crítico y silencioso.',
+   atoms:[
+     'Dockerfile multi-stage para api: build → runtime, sin dev deps ni cachés innecesarios',
+     'Dockerfile multi-stage para bot: build → runtime mínimo',
+     'Configurar volumen persistente para ChromaDB en Railway/Fly (CRÍTICO — verificar antes del primer deploy real)',
+     'Variables de entorno separadas por servicio y entorno. Secrets en Railway/Fly secrets, nunca en .env versionado',
+     '/v1/health (liveness) y /v1/ready (readiness: Chroma cargado + LLM provider alcanzable)',
+     'Deploy automático desde main tras CI verde',
+     'Test post-deploy: redeployar y verificar que las queries al índice siguen funcionando',
+     'Documentar rollback: cómo revertir API y bot independientemente'
+   ]},
+  {id:'TAR-11',title:'Logging estructurado + monitorización',prio:4,est:'5–7 h',deps:['TAR-08'],
+   goal:'structlog JSON en ambos servicios. Sentry. UptimeRobot. Métricas Prometheus en /v1/metrics.',
+   risk:'NO loggear PII: queries >100 chars, IPs, raw user_id de Telegram. Solo hash SHA-256+salt.',
+   atoms:[
+     'structlog en api y bot: campos timestamp, level, event, service, request_id, user_id_hash, latency_ms',
+     'Middleware FastAPI: genera X-Request-ID por request, lo propaga entre servicios',
+     'Política de privacidad en logs: truncar queries >100 chars, hashear user_id, no loggear IPs',
+     'Sentry en ambos servicios: solo excepciones no manejadas, ignorar 4xx esperados',
+     'UptimeRobot: ping /v1/health cada 5 min, alerta via Telegram (coherente con el producto)',
+     '/v1/metrics (Prometheus): req por endpoint y código, latencia p50/p95/p99, cache hit rate, validator failure rate, LLM errors'
+   ]},
+  {id:'TAR-13',title:'Privacidad + GDPR',prio:3,est:'2–3 h',deps:['TAR-04'],
+   goal:'Retención 30 días, hash de user_id, purga /forget, PRIVACY.md enlazado desde el bot.',
+   risk:'Hacer esto desde el inicio es mucho más barato que retro-aplicarlo con usuarios reales en producción.',
+   atoms:[
+     'Hash SHA-256+salt de telegram user_id antes de almacenar cualquier dato (NUNCA el ID raw)',
+     'Retención: queries crudas máx 30 días, agregados anonimizados ilimitados',
+     'Endpoint POST /v1/users/forget: purga queries, feedback y cache asociado del usuario',
+     'Cron diario: purgar datos >30 días',
+     'Redactar PRIVACY.md: qué se almacena, durante cuánto tiempo, cómo ejercer el derecho al olvido',
+     'Enlazar PRIVACY.md desde /start y /help del bot'
+   ]}
+]},
+{id:'f6',label:'F6',name:'Documentación',est:'4–6 h',mvp:false,tasks:[
+  {id:'TAR-10',title:'Documentación técnica',prio:3,est:'4–6 h',deps:['TAR-08'],
+   goal:'README, ARCHITECTURE.md, API.md, CONTRIBUTING.md, RUNBOOK.md. Dev externo levanta en <30 min.',
+   risk:'Bus factor 1. Sin documentación viva, el proyecto es inmantenible si el autor desaparece o descansa 6 meses.',
+   atoms:[
+     'README.md: pitch, setup en 5 pasos, badges CI y coverage',
+     'ARCHITECTURE.md: diagrama Mermaid de la arquitectura + ADRs de las decisiones clave',
+     'API.md: contrato completo de /v1/* con ejemplos de request/response reales',
+     'CONTRIBUTING.md: cómo añadir manuales, ejecutar eval, convenciones de commit',
+     'RUNBOOK.md: restaurar backup, rotar tokens, escalar, qué hacer con cada alerta de Sentry',
+     'Swagger en /docs protegido en producción con HTTP Basic (creds en env var)'
+   ]}
+]},
+{id:'f7',label:'F7',name:'Webapp (post-MVP)',est:'12–16 h',mvp:false,tasks:[
+  {id:'TAR-12',title:'Webapp frontend',prio:3,est:'12–16 h',deps:['TAR-08'],
+   goal:'La API ya existe desde F0. Esta fase es solo frontend. CORS, auth y versionado ya están listos.',
+   risk:'No empezar hasta validar MVP con usuarios reales. Scope creep garantizado si se acomete antes.',
+   atoms:[
+     'Elegir stack: SvelteKit (recomendado para proyecto unipersonal) o React+Vite+TanStack Query',
+     'Configurar CORS en API con allowlist explícita (dominio webapp + localhost dev)',
+     'Input bilingüe con detección automática + selector explícito ES/EN',
+     'Renderizado de respuesta con citas clicables (página del manual)',
+     'Botones 👍/👎 conectados al mismo endpoint /v1/feedback que el bot',
+     'Historial local en localStorage (no requiere auth de usuario)',
+     'Deploy en Vercel o Cloudflare Pages',
+     'Lighthouse score >85 en mobile y desktop'
+   ]}
+]},
+{id:'f8',label:'F8',name:'Validador Army (post-MVP)',est:'36–48 h',mvp:false,tasks:[
+  {id:'TAR-06',title:'Validador listas Infinity Army',prio:3,est:'30–40 h',deps:['TAR-08'],
+   goal:'POST /v1/army/validate. 100% determinista. Cero LLM.',
+   risk:'NO empezar sin validar F2–F5 en producción con usuarios reales. Mayor riesgo de scope creep del proyecto.',
+   atoms:[
+     'TAR-06-1 (4–6 h): Reverse engineering del JSON de Infinity Army — analizar estructura con listas reales descargadas',
+     'TAR-06-2 (4–6 h): Modelos Pydantic v2: ArmyList, CombatGroup, Trooper, Profile, Fireteam, Sectorial',
+     'TAR-06-3 (3–4 h): Validador de puntos totales por formato (300, 200, etc.) + SWC máximo (1 SWC/50 pts)',
+     'TAR-06-4 (3–4 h): Validador AVA por sectorial y tropa',
+     'TAR-06-5 (6–8 h): Validador Fireteams — composición legal, leader rules, min/max (el más complejo)',
+     'TAR-06-6 (4–6 h): Validador sectoriales: Lieutenant obligatorio, banned profiles, reglas específicas',
+     'TAR-06-7 (6–8 h): Suite de tests con ≥20 listas reales (válidas + inválidas con errores conocidos)'
+   ]},
+  {id:'TAR-07',title:'Schema Guard JSON Army',prio:3,est:'6–8 h',deps:['TAR-06'],
+   goal:'Esquema Pydantic estricto versionado. Fail-fast + alerta Sentry si el JSON de Infinity Army cambia.',
+   risk:'El JSON de Infinity Army puede cambiar sin aviso. Sin schema guard los errores son silenciosos y difíciles de diagnosticar.',
+   atoms:[
+     'Esquema Pydantic estricto del JSON de Infinity Army con versión explícita (v1, v2...)',
+     'En mismatch: fail-fast (no procesar), log estructurado con diff esperado vs recibido, alerta Sentry',
+     'Test de regresión: snapshot del esquema — cualquier cambio requiere bump de versión y revisión manual',
+     'Test: JSON válido pasa en <10 ms; JSON inválido rechazado con error específico y accionable'
+   ]}
+]}
+];
+
+function prio(n){
+  const c=n>=5?'#639922':n>=4?'#185fa5':'#888780';
+  const t=n>=5?'crítica':n>=4?'alta':'media';
+  return`<span class="dot" style="background:${c}" title="Prioridad ${t}"></span>`;
+}
+
+let currentFilter='all';
+
+function render(f){
+  currentFilter=f;
+  const root=document.getElementById('phases-root');
+  root.innerHTML='';
+  let totalTasks=0;
+  const hMap={all:'146–201 h',mvp:'95–135 h',f0:'3–5 h',f1:'14–20 h',f2:'50–66 h',f3:'8–12 h',f5:'15–22 h',f6:'4–6 h',f7:'12–16 h',f8:'36–48 h'};
+
+  PHASES.forEach(ph=>{
+    const show=f==='all'||(f==='mvp'?ph.mvp:ph.id===f);
+    if(!show)return;
+    const tasks=f==='mvp'?ph.tasks.filter(()=>ph.mvp):ph.tasks;
+    if(!tasks.length)return;
+    totalTasks+=tasks.length;
+
+    const block=document.createElement('div');
+    block.className=`phase-block ${ph.id}`;
+
+    const tasksHTML=tasks.map(t=>`
+<div class="task" id="t-${t.id}">
+  <div class="task-header" onclick="toggle('${t.id}')">
+    ${prio(t.prio)}
+    <span class="task-id">${t.id}</span>
+    <span class="task-title">${t.title}</span>
+    <span class="task-est">${t.est}</span>
+    <span class="task-chev">▾</span>
+  </div>
+  <div class="task-detail">
+    <div class="detail-row">
+      <div class="detail-box"><div class="detail-label">Objetivo</div><div class="detail-val">${t.goal}</div></div>
+      <div class="detail-box"><div class="detail-label">Riesgos / trade-offs</div><div class="detail-val">${t.risk}</div></div>
+    </div>
+    ${t.deps.length?`<div class="deps">Depende de: ${t.deps.map(d=>`<span class="dep-tag">${d}</span>`).join('')}</div>`:''}
+    <div class="atoms-section">
+      <div class="atoms-label">&#10003; Tareas atómicas</div>
+      ${t.atoms.map((a,i)=>`<div class="atom"><span class="atom-n">${i+1}</span><span>${a}</span></div>`).join('')}
+    </div>
+  </div>
+</div>`).join('');
+
+    block.innerHTML=`
+<div class="phase-header" onclick="this.parentElement.classList.toggle('collapsed')">
+  <span class="phase-pill">${ph.label}</span>
+  <span class="phase-name">${ph.name}</span>
+  <span class="phase-meta">${tasks.length} tareas · ${ph.est}</span>
+  <span class="chevron">▾</span>
+</div>
+<div class="tasks">${tasksHTML}</div>`;
+    root.appendChild(block);
+  });
+
+  document.getElementById('vis-count').textContent=totalTasks;
+  document.getElementById('vis-h').textContent=hMap[f]||'—';
+}
+
+function toggle(id){
+  const el=document.getElementById('t-'+id);
+  el.classList.toggle('open');
+}
+
+function filter(f,btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  render(f);
+}
+
+render('all');
+</script>
+</body>
+</html>
