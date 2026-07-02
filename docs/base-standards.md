@@ -127,6 +127,22 @@ hashed_id = hashlib.sha256(f"{salt}{telegram_user_id}".encode()).hexdigest()
 - Reject non-printable control characters (except `\n` and `\t`)
 - Do NOT filter `<>{}` — valid in wargaming queries
 
+### ChromaDB Persistence (CRITICAL)
+
+ChromaDB requires persistent volume mount in production:
+- **Environment variable**: `GEIST_API_CHROMA_PATH` (default: `data/chroma`)
+- **Deployment**: Mount persistent volume at this path in Railway/Fly.io
+- **Without volume**: Index is lost on every deploy (CRITICAL BLOCKER)
+- **Health check**: Verify collection contains >0 chunks after indexing
+- **Backup**: Original chunks JSONL is source of truth for rebuilds
+
+Example Railway/Fly.io volume config:
+```toml
+[mounts]
+  source = "chroma_data"
+  destination = "/app/data/chroma"
+```
+
 ---
 
 ## Code Quality
