@@ -1,6 +1,6 @@
 # Geist — Estado de Implementación
 
-**Última actualización:** 2026-07-02 (post TAR-02 completado)
+**Última actualización:** 2026-07-02
 
 ---
 
@@ -10,12 +10,12 @@
 |------|-------------|----------|--------|
 | **F0** | Bootstrap monorepo | 100% | ✅ Completado |
 | **F1** | Ingesta PDF → chunks | 100% | ✅ Completado |
-| **F2** | Núcleo RAG (ChromaDB) | 12% | 🔄 En curso |
+| **F2** | Núcleo RAG (ChromaDB) | 0% | ⏳ Pendiente |
 | **F3** | Bot Telegram | 0% | ⏳ Pendiente |
 | **F5** | Deploy (Railway/Fly.io) | 0% | ⏳ Pendiente |
 | **F6+** | Post-MVP | 0% | ❌ Diferido |
 
-**Progreso global:** 2.12/5 fases core completadas (42%)
+**Progreso global:** 2/5 fases core completadas (40%)
 
 ---
 
@@ -74,98 +74,59 @@ data/chunks/
 
 ---
 
-### 🔄 F2 — Núcleo RAG (EN CURSO - 12%)
+### ⏳ F2 — Núcleo RAG (PENDIENTE)
 
-#### TAR-02 — Indexación embeddings multilingüe
-- **Estado:** ✅ Completado (2026-07-02)
-- **Prioridad:** 5 (crítica)
-- **Estimación:** 6–8 h
-- **Completado:** 2026-07-02
-- **Archivado:** openspec/changes/archive/2026-07-02-tar-02-indexing-embeddings/
-- **Entregables:**
-  - [x] E5MultilingualSmall wrapper con prefijos "passage:" / "query:"
-  - [x] ChromaDB PersistentClient en `services/api/src/geist_api/indexing/`
-  - [x] IndexManager con indexación incremental por content_hash
-  - [x] CLI: `python -m geist_api.cli.index` (alias: `just index`)
-  - [x] Tests unitarios + integración + smoke tests bilingües
-  - [x] Documentación en README.md y base-standards.md
-  - [x] Specs creadas: e5-embedding-wrapper, incremental-indexing, vector-indexing
-
-**Datos listos para indexar:**
-```
-data/chunks/{es,en}/{core,faq,its,reinforcements}/chunks.jsonl
-Total: 937+ chunks listos para indexar con `just index`
-```
-
-#### TAR-02b — Language detection (lingua-py)
+#### TAR-02 — Indexación ChromaDB + embeddings
 - **Estado:** ⏳ Pendiente
-- **Prioridad:** 5 (crítica - bloqueante para TAR-03)
-- **Estimación:** 2–3 h
-- **Dependencias:** TAR-00 ✅
+- **Prioridad:** 5 (crítica)
+- **Estimación:** 8–10 h
+- **Dependencias:** TAR-01b ✅
 - **Bloqueadores:** Ninguno
 - **Tareas previstas:**
-  - [ ] Instalar lingua-language-detector (solo ES+EN, no los 75 idiomas)
-  - [ ] Implementar `detect_language(text: str) -> tuple[Lang, float]` en `services/api/src/geist_api/core/language.py`
-  - [ ] Política: confianza ≥0.7 → detectado; <0.7 → fallback ES
-  - [ ] Override explícito: parámetro `?lang=en` en API, comandos `/en` `/es` en bot
-  - [ ] Tests: 100 ejemplos balanceados, >95% precisión en queries >3 palabras, latencia <5 ms
+  - [ ] Configurar `intfloat/multilingual-e5-small`
+  - [ ] Implementar indexación con prefijos "passage:"
+  - [ ] Crear ChromaDB PersistentClient
+  - [ ] Indexar `data/chunks/{lang}/{manual}/chunks.jsonl`
+  - [ ] Output: ChromaDB en `data/chroma/`
+  - [ ] Script CLI: `python -m geist_ingestion index`
 
-#### TAR-03 — Retrieval híbrido con filtro por idioma
-- **Estado:** ⏳ Pendiente
-- **Prioridad:** 5 (crítica)
-- **Estimación:** 8–10 h
-- **Dependencias:** TAR-02 ✅, TAR-02b ⏳
-- **Bloqueadores:** TAR-02b debe completarse primero
-- **Tareas previstas:**
-  - [ ] Implementar BM25 en memoria (rank-bm25 o bm25s), índice separado por idioma
-  - [ ] Implementar `hybrid_retrieve(query, lang, top_k)`: vector search ChromaDB + BM25 paralelo
-  - [ ] Fusión por Reciprocal Rank Fusion (RRF, k=60)
-  - [ ] Score gating: mapear score fusionado a "high"/"low"/"none" (thresholds provisionales: 0.80/0.65)
-  - [ ] Fallback cross-lang: si lang-query no da hit ≥LOW pero otro idioma da ≥HIGH → retornar con disclaimer
-  - [ ] Definir y retornar RetrievalResult: hits, lang_detected, lang_searched, confidence_level, cross_lang_fallback, elapsed_ms
-  - [ ] Test: p95 latencia <300 ms local, recall@5 >85% con primeras 10 queries del golden set
-
-#### TAR-03d — Golden dataset + métricas eval
-- **Estado:** ⏳ Pendiente
-- **Prioridad:** 5 (crítica - calibra thresholds)
-- **Estimación:** 8–10 h
-- **Dependencias:** TAR-03 ⏳
-- **Tareas previstas:**
-  - [ ] Recopilar 30 queries ES + 30 EN de reglas reales + ≥10 queries negativas
-  - [ ] Formato eval/golden_set.jsonl con expected_canonical_rules, pages, must_mention, expected_behavior
-  - [ ] Implementar script geist-eval: Recall@5, MRR, faithfulness rate, citation accuracy
-  - [ ] Calibrar HIGH_CONFIDENCE y LOW_CONFIDENCE basado en distribución de scores reales
-  - [ ] Configurar CI: geist-eval con LLM mockeado, degradación >5% bloquea merge
-
-#### TAR-03b — Capa LLM condicional + prompt restrictivo
-- **Estado:** ⏳ Pendiente (diferido a post-MVP por ADR-001)
-- **Prioridad:** 2 (baja - no bloqueante para MVP)
-- **Estimación:** 6–8 h
-- **Dependencias:** TAR-03 ⏳
-
-#### TAR-03c — Faithfulness validator (anti-alucinación)
-- **Estado:** ⏳ Pendiente (diferido a post-MVP por ADR-001)
-- **Prioridad:** 2 (baja - solo relevante con LLM)
-- **Estimación:** 4–6 h
-- **Dependencias:** TAR-03b ⏳
-
-#### TAR-05 — Seguridad: rate limit + validación input
+#### TAR-02b — BM25 indexing
 - **Estado:** ⏳ Pendiente
 - **Prioridad:** 4 (alta)
-- **Estimación:** 5–7 h
-- **Dependencias:** TAR-03 ⏳
+- **Estimación:** 4–6 h
+- **Dependencias:** TAR-01b ✅
 - **Tareas previstas:**
-  - [ ] Autenticación bot↔API con shared secret X-Internal-Auth
-  - [ ] slowapi: rate limiting por chat_id/IP
-  - [ ] Validación input: max 500 chars, rechazo control chars (excepto \n \t)
-  - [ ] NO filtrar <>{} — válidos en queries wargaming
+  - [ ] Implementar índice BM25 en memoria (rank-bm25 o bm25s)
+  - [ ] Índice separado por idioma (ES/EN)
+  - [ ] Serialización/deserialización de índices
+  - [ ] Validación de retrieval keyword-only
 
-#### TAR-05b — Cache de respuestas
-- **Estado:** ⏳ Pendiente (post-MVP)
-- **Prioridad:** 3 (media)
+#### TAR-02c — Reciprocal Rank Fusion (RRF)
+- **Estado:** ⏳ Pendiente
+- **Prioridad:** 4 (alta)
 - **Estimación:** 3–4 h
+- **Dependencias:** TAR-02 ⏳, TAR-02b ⏳
+- **Tareas previstas:**
+  - [ ] Implementar algoritmo RRF (k=60)
+  - [ ] Fusión de resultados ChromaDB + BM25
+  - [ ] Top-k post-fusion configurable
+  - [ ] Tests de integración
 
-#### TAR-09 — Tests + CI pipeline
+#### TAR-03a — Endpoint /v1/search
+- **Estado:** ⏳ Pendiente
+- **Prioridad:** 5 (crítica)
+- **Estimación:** 6–8 h
+- **Dependencias:** TAR-02c ⏳
+- **Tareas previstas:**
+  - [ ] Router FastAPI en `services/api/src/geist_api/routers/search.py`
+  - [ ] Modelos Pydantic `SearchRequest`/`SearchResponse` en `shared/`
+  - [ ] Integración con RRF
+  - [ ] Detección de idioma con lingua-py
+  - [ ] Cross-language fallback
+  - [ ] Cálculo de `confidence_level` (provisional)
+  - [ ] Placeholder `llm_answer: None`
+
+#### TAR-03b — Endpoint /v1/feedback
 - **Estado:** ⏳ Pendiente
 - **Prioridad:** 3 (media)
 - **Estimación:** 2–3 h
@@ -200,11 +161,11 @@ Total: 937+ chunks listos para indexar con `just index`
 
 ### ⏳ F3 — Bot Telegram (PENDIENTE)
 
-#### TAR-04 — Bot Telegram @geistBot (proceso separado)
+#### TAR-04 — Bot Telegram básico
 - **Estado:** ⏳ Pendiente
-- **Prioridad:** 5 (crítica para interfaz usuario)
-- **Estimación:** 8–12 h
-- **Dependencias:** TAR-03 ⏳, TAR-05 ⏳
+- **Prioridad:** 4 (alta)
+- **Estimación:** 8–10 h
+- **Dependencias:** TAR-03a ⏳
 - **Tareas previstas:**
   - [ ] Configurar python-telegram-bot en `services/bot/`
   - [ ] Handler para /start, /help, /search
@@ -217,11 +178,11 @@ Total: 937+ chunks listos para indexar con `just index`
 
 ### ⏳ F5 — Deploy (PENDIENTE)
 
-#### TAR-08 — Despliegue API + Bot independientes
+#### TAR-05 — Deploy a Railway/Fly.io
 - **Estado:** ⏳ Pendiente
-- **Prioridad:** 4 (alta)
-- **Estimación:** 8–12 h
-- **Dependencias:** TAR-04 ⏳
+- **Prioridad:** 3 (media, post-MVP viable)
+- **Estimación:** 4–6 h
+- **Dependencias:** TAR-03a ✅, TAR-04 ✅
 - **Tareas previstas:**
   - [ ] Dockerfile para API + Bot
   - [ ] Config de Railway/Fly.io
@@ -244,16 +205,15 @@ Total: 937+ chunks listos para indexar con `just index`
 ## Métricas de Progreso
 
 ### Tareas por Estado
-- ✅ **Completadas:** 4 (TAR-00, TAR-01, TAR-01b, TAR-02)
+- ✅ **Completadas:** 3 (TAR-00, TAR-01, TAR-01b)
 - 🔄 **En curso:** 0
-- ⏳ **Pendientes críticas:** 5 (TAR-02b, TAR-03, TAR-03d, TAR-04, TAR-08)
-- ⏳ **Pendientes no bloqueantes:** 4+ (TAR-05, TAR-05b, TAR-09, TAR-11, TAR-13)
-- ❌ **Diferidas post-MVP:** 3+ (TAR-03b, TAR-03c, LLM layer)
+- ⏳ **Pendientes:** 10+ (F2–F5)
+- ❌ **Diferidas:** 1+ (F6+)
 
 ### Estimaciones
-- **Tiempo invertido:** ~24–32 h (F0 + F1 + TAR-02)
-- **Tiempo estimado restante MVP:** ~35–50 h (TAR-02b → TAR-08)
-- **Total proyecto MVP:** ~59–82 h
+- **Tiempo invertido:** ~18–24 h (F0 + F1)
+- **Tiempo estimado restante:** ~40–55 h (F2–F5)
+- **Total proyecto MVP:** ~58–79 h
 
 ### Hitos Críticos
 - [x] **M1:** Monorepo funcional (F0) — ✅ Completado
@@ -266,20 +226,16 @@ Total: 937+ chunks listos para indexar con `just index`
 
 ## Bloqueadores Actuales
 
-**TAR-03 bloqueado por TAR-02b:** El retrieval híbrido necesita language detection para funcionar correctamente.
+**Ninguno.** Todas las dependencias de F2 están resueltas (TAR-01b completado).
 
 ---
 
-## Próximos Pasos Inmediatos (Crítico Path)
+## Próximos Pasos Inmediatos
 
-1. **TAR-02b** — Language detection con lingua-py (2–3 h) ⚡ **DESBLOQUEA TODO**
-2. **TAR-03** — Retrieval híbrido Vector+BM25+RRF (8–10 h)
-3. **TAR-03d** — Golden dataset para calibrar thresholds (8–10 h)
-4. **TAR-04** — Bot Telegram @geistBot (8–12 h)
-5. **TAR-08** — Deploy a Railway/Fly.io (8–12 h)
-
-**Demo técnica funcional:** Después de TAR-03 (~10–13 h desde ahora)  
-**Bot funcional en Telegram:** Después de TAR-04 (~18–25 h desde ahora)
+1. **TAR-02** — Indexación ChromaDB con embeddings multilingual-e5-small
+2. **TAR-02b** — Implementar índice BM25 en memoria
+3. **TAR-02c** — Fusión RRF de resultados
+4. **TAR-03a** — Endpoint /v1/search en FastAPI
 
 ---
 
