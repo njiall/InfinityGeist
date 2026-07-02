@@ -33,7 +33,7 @@
       "Bash(python -m geist_ingestion pipeline --manual faq --es docs/infinity-faq-n5-es-v5.0.0.pdf --en docs/infinity-faq-n5-en-v5.0.0.pdf)",
       "Bash(python -m geist_ingestion pipeline --manual reinforcements --es docs/reinforcement-rules-es.pdf --en docs/reinforcement-rules-en.pdf)",
       "Bash(git commit -m 'fix\\(TAR-01b\\): re-ingest all manuals with correct manual_id \\(core, faq, its, reinforcements\\) *)",
-      "Bash(git rebase *)"
+      "Bash(git remote *)"
     ],
     "additionalDirectories": [
       "C:\\Desarrollo\\Proyectos\\Infinity AI\\.claude\\us",
